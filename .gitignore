@@ -1,0 +1,36 @@
+node_modules/
+.env
+*.log
+.DS_Store
+data.sqlite
+
+# Backend
+backend/data.sqlite
+backend/prisma/*.db
+
+# Flutter mobile
+mobile/build/
+mobile/.dart_tool/
+mobile/.packages
+mobile/.pub-cache/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/.idea/
+mobile/*.iml
+mobile/.vscode/
+
+# Web
+web/dist/
+web/node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+node_modules

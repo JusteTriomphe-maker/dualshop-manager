@@ -1,0 +1,16 @@
+{
+  "name": "dualshop-manager",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "backend:dev": "cd backend && node --watch src/app.js",
+    "backend:start": "cd backend && node src/app.js",
+    "backend:seed": "cd backend && node prisma/seed.js",
+    "web:dev": "cd web && npm run dev",
+    "web:build": "cd web && npm run build",
+    "dev": "concurrently \"npm run backend:dev\" \"npm run web:dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

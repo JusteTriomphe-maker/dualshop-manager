@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestion hors-ligne - 2 boutiques</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Gestion hors-ligne (Épicerie &amp; Resto/Cave)</h1>
+    <div class="status" id="status">Chargement...</div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Boutique</h2>
+      <label>
+        Choisir une boutique
+        <select id="boutiqueSelect"></select>
+      </label>
+      <div class="row">
+        <button class="primary" id="btnRapports">Rapports</button>
+        <button id="btnProduits">Produits</button>
+        <button id="btnStock">Stock</button>
+        <button id="btnVentes">Ventes</button>
+        <button id="btnDepenses">Dépenses</button>
+      </div>
+    </section>
+
+    <section class="card" id="view">
+      <div class="muted" id="viewTitle">Sélectionne une action</div>
+      <div id="viewBody"></div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
+
