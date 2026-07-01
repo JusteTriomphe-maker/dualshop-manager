@@ -87,9 +87,16 @@ async function createDetteFournisseur(req, res) {
 
 async function payerDetteClient(req, res) {
   const { detteId, montant, modePaiement } = req.body;
-  const dette = await prisma.detteClient.findUnique({ where: { id: detteId } });
+  const dette = await prisma.detteClient.findUnique({
+    where: { id: detteId },
+    include: { client: true }
+  });
   if (!dette) return res.status(404).json({ error: 'Dette introuvable' });
   if (dette.statut === 'PAYEE') return res.status(400).json({ error: 'Dette déjà payée' });
+
+  if (req.user.role === 'CAISSIER' && dette.client.boutiqueId !== req.user.boutiqueId) {
+    return res.status(403).json({ error: 'Accès interdit : ce client appartient à une autre boutique.' });
+  }
 
   const result = await prisma.$transaction(async (tx) => {
     const paiement = await tx.paiementClient.create({

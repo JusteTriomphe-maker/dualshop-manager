@@ -30,7 +30,15 @@ export default function Dashboard() {
 
         <div className="w-full sm:w-72">
           <label className="field-label">Boutique</label>
-          <select value={boutiqueId} onChange={e => setBoutique(e.target.value)} className="select-control">
+          <select
+            value={boutiqueId}
+            onChange={e => {
+              const bId = e.target.value
+              const bObj = boutiques.find(b => b.id === bId)
+              setBoutique(bId, bObj?.type || '')
+            }}
+            className="select-control"
+          >
             <option value="">Sélectionner une boutique</option>
             {boutiques.map(b => (
               <option key={b.id} value={b.id}>{b.nom}</option>

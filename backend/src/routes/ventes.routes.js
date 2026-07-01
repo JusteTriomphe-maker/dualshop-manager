@@ -5,7 +5,7 @@ const { authorize } = require('../middlewares/rbac.middleware');
 
 const router = Router();
 router.use(authenticate);
-router.get('/', list);
+router.get('/', authorize('DG', 'GERANT'), list);
 router.post('/', authorize('DG', 'GERANT', 'CAISSIER'), create);
 router.post('/sync', authorize('DG', 'GERANT', 'CAISSIER'), sync);
 router.get('/:id', getById);

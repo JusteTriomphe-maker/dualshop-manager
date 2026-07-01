@@ -28,28 +28,32 @@ async function caPeriode(req, res) {
   if (fin) where.createdAt = { ...where.createdAt, lte: new Date(fin) };
   if (boutiqueId) where.boutiqueId = boutiqueId;
 
-  const aggregation = await prisma.vente.aggregate({
-    where,
-    _sum: { total: true },
-    _count: true,
-  });
+  const [aggregation, ventes] = await Promise.all([
+    prisma.vente.aggregate({
+      where,
+      _sum: { total: true },
+      _count: true,
+    }),
+    prisma.vente.findMany({
+      where,
+      select: { total: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ]);
 
-  const ventesParJour = await prisma.$queryRawUnsafe(`
-    SELECT DATE(created_at) as jour, SUM(total) as ca, COUNT(*) as nb
-    FROM Vente
-    WHERE statut = 'COMPLETEE'
-    ${boutiqueId ? `AND boutiqueId = '${boutiqueId}'` : ''}
-    ${debut ? `AND created_at >= '${debut}'` : ''}
-    ${fin ? `AND created_at <= '${fin}'` : ''}
-    GROUP BY DATE(created_at)
-    ORDER BY jour
-  `);
+  const grouped = ventes.reduce((acc, vente) => {
+    const jour = vente.createdAt.toISOString().split('T')[0];
+    if (!acc[jour]) acc[jour] = { jour, ca: 0, nb: 0 };
+    acc[jour].ca += vente.total;
+    acc[jour].nb += 1;
+    return acc;
+  }, {});
 
   res.json({
     periode: { debut, fin },
     ca: aggregation._sum.total || 0,
     nbVentes: aggregation._count,
-    parJour: ventesParJour,
+    parJour: Object.values(grouped),
   });
 }
 

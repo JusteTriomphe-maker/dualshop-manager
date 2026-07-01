@@ -10,7 +10,10 @@ const loginSchema = z.object({
 
 async function login(req, res) {
   const { email, password } = loginSchema.parse(req.body);
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { boutique: { select: { type: true } } },
+  });
   if (!user || !user.actif) return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
@@ -20,17 +23,31 @@ async function login(req, res) {
   res.json({
     token,
     refreshToken,
-    user: { id: user.id, nom: user.nom, email: user.email, role: user.role, boutiqueId: user.boutiqueId },
+    user: {
+      id: user.id,
+      nom: user.nom,
+      email: user.email,
+      role: user.role,
+      boutiqueId: user.boutiqueId,
+      boutiqueType: user.boutique?.type || null,
+    },
   });
 }
 
 async function me(req, res) {
   const user = await prisma.user.findUnique({
     where: { id: req.user.userId },
-    select: { id: true, nom: true, email: true, role: true, boutiqueId: true, boutique: true },
+    include: { boutique: { select: { type: true } } },
   });
   if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
-  res.json(user);
+  res.json({
+    id: user.id,
+    nom: user.nom,
+    email: user.email,
+    role: user.role,
+    boutiqueId: user.boutiqueId,
+    boutiqueType: user.boutique?.type || null,
+  });
 }
 
 async function changePassword(req, res) {

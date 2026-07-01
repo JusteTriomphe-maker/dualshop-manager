@@ -8,7 +8,7 @@
     "backend:seed": "cd backend && node prisma/seed.js",
     "web:dev": "cd web && npm run dev",
     "web:build": "cd web && npm run build",
-    "dev": "concurrently \"npm run backend:dev\" \"npm run web:dev\""
+    "dev": "node dev.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

@@ -4,6 +4,7 @@ class User {
   final String email;
   final String role;
   final String? boutiqueId;
+  final String? boutiqueType;
 
   User({
     required this.id,
@@ -11,6 +12,7 @@ class User {
     required this.email,
     required this.role,
     this.boutiqueId,
+    this.boutiqueType,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class User {
       email: json['email'],
       role: json['role'],
       boutiqueId: json['boutiqueId'],
+      boutiqueType: json['boutiqueType'],
     );
   }
 
@@ -29,6 +32,7 @@ class User {
     'email': email,
     'role': role,
     'boutiqueId': boutiqueId,
+    'boutiqueType': boutiqueType,
   };
 
   bool get isDG => role == 'DG';

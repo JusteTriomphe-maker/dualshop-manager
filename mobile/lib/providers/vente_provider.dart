@@ -9,17 +9,22 @@ class VenteProvider extends ChangeNotifier {
   List<LigneVente> _panier = [];
   List<Produit> _produits = [];
   String _boutiqueId = '';
+  String _boutiqueType = '';
   bool _loading = false;
 
   List<LigneVente> get panier => _panier;
   List<Produit> get produits => _produits;
   String get boutiqueId => _boutiqueId;
+  String get boutiqueType => _boutiqueType;
   bool get loading => _loading;
 
   double get total => _panier.fold(0, (s, l) => s + l.sousTotal);
 
-  void setBoutique(String id) {
+  void setBoutique(String id, {String? type}) {
     _boutiqueId = id;
+    if (type != null) {
+      _boutiqueType = type;
+    }
     notifyListeners();
   }
 

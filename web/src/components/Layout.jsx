@@ -4,14 +4,11 @@ import useAuthStore from '../store/authStore'
 
 const navItems = [
   { path: '/', label: 'Tableau de bord', roles: ['DG', 'GERANT', 'CAISSIER'] },
-  { path: '/ventes/nouvelle', label: 'Nouvelle vente', roles: ['DG', 'GERANT', 'CAISSIER'] },
-  { path: '/ventes', label: 'Ventes', roles: ['DG', 'GERANT', 'CAISSIER'] },
-  { path: '/stock', label: 'Produits', roles: ['DG', 'GERANT', 'CAISSIER'] },
-  { path: '/stock/mouvements', label: 'Mouvements', roles: ['DG', 'GERANT'] },
-  { path: '/dettes', label: 'Dettes', roles: ['DG', 'GERANT'] },
-  { path: '/clients', label: 'Clients', roles: ['DG', 'GERANT'] },
-  { path: '/fournisseurs', label: 'Fournisseurs', roles: ['DG', 'GERANT'] },
+  { path: '/ventes/nouvelle', label: 'Vente', roles: ['DG', 'GERANT', 'CAISSIER'] },
+  { path: '/stock', label: 'Stock', roles: ['DG', 'GERANT'] },
   { path: '/rapports', label: 'Rapports', roles: ['DG', 'GERANT'] },
+  { path: '/dettes', label: 'Dettes', roles: ['DG', 'GERANT'] },
+  { path: '/contacts', label: 'Contacts', roles: ['DG', 'GERANT'] },
   { path: '/admin/users', label: 'Utilisateurs', roles: ['DG'] },
 ]
 
@@ -22,7 +19,7 @@ export default function Layout({ children }) {
   const location = useLocation()
 
   const boutiqueNom = boutiqueId === 'boutique-epicerie' ? 'Épicerie' : boutiqueId === 'boutique-restaubar' ? 'Restau-bar' : ''
-  const visibleItems = navItems.filter(item => item.roles.includes(user?.role))
+  const visibleItems = navItems.filter(item => item.roles.includes(user?.role) && !(user?.role === 'CAISSIER' && item.path === '/'))
   const currentPage = visibleItems.find(item => item.path === location.pathname)?.label || 'DualShop'
 
   const handleLogout = () => {

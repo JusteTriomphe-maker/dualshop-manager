@@ -5,6 +5,7 @@ const useAuthStore = create((set) => ({
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   token: localStorage.getItem('token') || null,
   boutiqueId: localStorage.getItem('boutiqueId') || '',
+  boutiqueType: localStorage.getItem('boutiqueType') || '',
 
   login: async (email, password) => {
     const res = await api.post('/auth/login', { email, password })
@@ -12,21 +13,29 @@ const useAuthStore = create((set) => ({
     localStorage.setItem('token', token)
     localStorage.setItem('user', JSON.stringify(user))
     const boutiqueId = user.boutiqueId || ''
+    const boutiqueType = user.boutiqueType || ''
     if (boutiqueId) localStorage.setItem('boutiqueId', boutiqueId)
-    set({ user, token, boutiqueId })
+    if (boutiqueType) localStorage.setItem('boutiqueType', boutiqueType)
+    set({ user, token, boutiqueId, boutiqueType })
     return user
   },
 
-  setBoutique: (boutiqueId) => {
+  setBoutique: (boutiqueId, boutiqueType = '') => {
     localStorage.setItem('boutiqueId', boutiqueId)
-    set({ boutiqueId })
+    if (boutiqueType) {
+      localStorage.setItem('boutiqueType', boutiqueType)
+    } else {
+      localStorage.removeItem('boutiqueType')
+    }
+    set({ boutiqueId, boutiqueType })
   },
 
   logout: () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     localStorage.removeItem('boutiqueId')
-    set({ user: null, token: null, boutiqueId: '' })
+    localStorage.removeItem('boutiqueType')
+    set({ user: null, token: null, boutiqueId: '', boutiqueType: '' })
   },
 
   isAuthenticated: () => !!localStorage.getItem('token'),

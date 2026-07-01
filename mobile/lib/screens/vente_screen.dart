@@ -24,7 +24,7 @@ class _VenteScreenState extends State<VenteScreen> {
       final vp = context.read<VenteProvider>();
       final user = context.read<AuthProvider>().user;
       if (user?.boutiqueId != null) {
-        vp.setBoutique(user!.boutiqueId!);
+        vp.setBoutique(user!.boutiqueId!, type: user.boutiqueType);
         vp.loadProduits();
       }
     });
@@ -41,6 +41,8 @@ class _VenteScreenState extends State<VenteScreen> {
     final vp = context.watch<VenteProvider>();
     final auth = context.watch<AuthProvider>();
     final isDG = auth.user?.isDG ?? false;
+    
+    final isRestaubar = vp.boutiqueType == 'RESTAUBAR';
 
     final filtered = vp.produits
         .where((p) => p.stockActuel > 0)
@@ -61,7 +63,7 @@ class _VenteScreenState extends State<VenteScreen> {
                 ],
                 onChanged: (v) {
                   if (v != null) {
-                    vp.setBoutique(v);
+                    vp.setBoutique(v, type: v == 'boutique-restaubar' ? 'RESTAUBAR' : 'EPICERIE');
                     vp.loadProduits();
                   }
                 },
@@ -137,17 +139,18 @@ class _VenteScreenState extends State<VenteScreen> {
                     },
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'N° table (Restau-bar)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
+                if (isRestaubar)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'N° table (Restau-bar)',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      onChanged: (v) => _numeroTable = v,
                     ),
-                    onChanged: (v) => _numeroTable = v,
                   ),
-                ),
                 Row(
                   children: [
                     Text('Total: ${vp.total.toStringAsFixed(0)} F', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -176,7 +179,7 @@ class _VenteScreenState extends State<VenteScreen> {
                           return;
                         }
                         try {
-                          final res = await vp.validerVente(_modePaiement, numeroTable: _numeroTable.isEmpty ? null : _numeroTable);
+                          final res = await vp.validerVente(_modePaiement, numeroTable: isRestaubar && _numeroTable.isNotEmpty ? _numeroTable : null);
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text(res['status'] == 'synced' ? 'Vente enregistrée!' : 'Vente sauvegardée (hors-ligne)'),

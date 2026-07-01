@@ -58,17 +58,21 @@ async function remove(req, res) {
 }
 
 async function alertes(req, res) {
-  const { boutiqueId } = req.query;
-  const where = { actif: true, stockActuel: { lte: 0 } };
+  let { boutiqueId } = req.query;
+  if (req.user.role === 'CAISSIER') {
+    boutiqueId = req.user.boutiqueId;
+  }
+  const where = { actif: true };
   if (boutiqueId) where.boutiqueId = boutiqueId;
-  const stockBas = await prisma.produit.findMany({
-    where: { actif: true, stockActuel: { lte: 0 } },
+
+  const activeProducts = await prisma.produit.findMany({
+    where,
     orderBy: { stockActuel: 'asc' },
   });
-  const stockAlerte = await prisma.produit.findMany({
-    where: { actif: true, stockActuel: { gt: 0, lte: prisma.produit.stockMin } },
-    orderBy: { stockActuel: 'asc' },
-  });
+
+  const stockBas = activeProducts.filter(p => p.stockActuel <= 0);
+  const stockAlerte = activeProducts.filter(p => p.stockActuel > 0 && p.stockActuel <= p.stockMin);
+
   res.json({ rupture: stockBas, alerte: stockAlerte });
 }
 

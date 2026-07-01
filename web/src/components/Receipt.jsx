@@ -3,8 +3,11 @@ import { forwardRef } from 'react'
 function formatDate(d) {
   return new Date(d).toLocaleString('fr-CG', {
     timeZone: 'Africa/Lagos',
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -63,7 +66,7 @@ const Receipt = forwardRef(({ vente }, ref) => {
 
       <div className="payment-row">
         <span>Paiement</span>
-        <span className="payment-value">{vente.modePaiement}</span>
+        <span className="payment-value">{formatPayment(vente.modePaiement)}</span>
       </div>
 
       <div className="footer">
@@ -75,8 +78,10 @@ const Receipt = forwardRef(({ vente }, ref) => {
       <style>{`
         .receipt {
           width: 80mm;
+          max-width: 80mm;
           margin: 0 auto;
           padding: 2mm 3mm;
+          box-sizing: border-box;
           font-family: 'Courier New', Courier, monospace;
           font-size: 10px;
           line-height: 1.4;
@@ -107,6 +112,16 @@ const Receipt = forwardRef(({ vente }, ref) => {
     </div>
   )
 })
+
+function formatPayment(mode) {
+  const labels = {
+    ESPECES: 'Espèces',
+    MOBILE_MONEY: 'Mobile Money',
+    CARTE: 'Carte',
+    CREDIT: 'Crédit',
+  }
+  return labels[mode] || mode
+}
 
 Receipt.displayName = 'Receipt'
 export default Receipt

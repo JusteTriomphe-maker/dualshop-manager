@@ -16,9 +16,12 @@ export default function NouvelleVente() {
   const [clientId, setClientId] = useState('')
   const [nouveauClient, setNouveauClient] = useState('')
   const [numeroTable, setNumeroTable] = useState('')
+  const [venteActive, setVenteActive] = useState(false)
   const receiptRef = useRef()
   const { lignes, addProduit, updateQuantite, removeLigne, clear, total } = useVenteStore()
   const boutiqueId = useAuthStore(s => s.boutiqueId)
+  const boutiqueType = useAuthStore(s => s.boutiqueType)
+  const isRestaubar = boutiqueType === 'RESTAUBAR'
 
   useEffect(() => {
     if (boutiqueId) {
@@ -47,8 +50,8 @@ export default function NouvelleVente() {
         boutiqueId,
         lignes: lignes.map(l => ({
           produitId: l.produitId,
-          quantite: l.quantite,
-          prixUnit: l.prixUnit,
+          quantite: parseInt(l.quantite, 10),
+          prixUnit: parseFloat(l.prixUnit),
         })),
         modePaiement,
         sourceDevice: 'web',
@@ -67,6 +70,8 @@ export default function NouvelleVente() {
       setLastVente(res.data)
       clear()
       setNumeroTable('')
+      setVenteActive(false)
+      api.get(`/produits?boutiqueId=${boutiqueId}`).then(res => setProduits(res.data)).catch(() => {})
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur lors de la vente')
     } finally {
@@ -78,13 +83,20 @@ export default function NouvelleVente() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Nouvelle vente</h1>
-          <p className="page-subtitle">Ajoutez les articles, choisissez le mode de paiement, puis validez.</p>
+          <h1 className="page-title">Vente</h1>
+          <p className="page-subtitle">Démarrez une vente, sélectionnez les produits, puis validez le paiement.</p>
         </div>
-        <div className="stat-card w-full sm:w-64">
-          <p className="stat-label">Total panier</p>
-          <p className="stat-value">{total().toLocaleString('fr-FR')} F</p>
-          <p className="stat-meta">{lignes.length} article(s)</p>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-stretch">
+          {!venteActive && (
+            <button type="button" onClick={() => setVenteActive(true)} className="btn btn-success h-auto min-h-16 px-6 text-base">
+              Vente
+            </button>
+          )}
+          <div className="stat-card w-full sm:w-64">
+            <p className="stat-label">Total panier</p>
+            <p className="stat-value">{total().toLocaleString('fr-FR')} F</p>
+            <p className="stat-meta">{lignes.length} article(s)</p>
+          </div>
         </div>
       </div>
 
@@ -94,40 +106,64 @@ export default function NouvelleVente() {
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_28rem]">
         <section className="panel min-w-0">
-          <div className="border-b border-slate-200 p-4">
-            <label className="field-label">Recherche produit</label>
-            <input
-              type="text"
-              placeholder="Nom du produit ou du plat"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="input-control"
-            />
-          </div>
-
-          <div className="max-h-[34rem] overflow-y-auto p-4">
-            {filtered.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
-                {filtered.map(p => (
-                  <article key={p.id} className="mobile-card flex flex-col justify-between gap-4">
-                    <div>
-                      <div className="flex items-start justify-between gap-3">
-                        <h2 className="font-semibold text-slate-950">{p.nom}</h2>
-                        <span className="badge badge-neutral">Stock {p.stockActuel}</span>
-                      </div>
-                      <p className="mt-2 text-sm font-semibold text-slate-700">{p.prix.toLocaleString('fr-FR')} F</p>
-                      {p.categorie && <p className="mt-1 text-xs text-slate-500">{p.categorie}</p>}
-                    </div>
-                    <button onClick={() => addProduit(p)} className="btn btn-primary btn-sm w-full">
-                      Ajouter
-                    </button>
-                  </article>
-                ))}
+          {venteActive ? (
+            <>
+              <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="w-full sm:max-w-md">
+                  <label className="field-label">Recherche produit</label>
+                  <input
+                    type="text"
+                    placeholder="Nom du produit ou du plat"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="input-control"
+                  />
+                </div>
+                <span className="badge badge-success self-start sm:self-auto">Vente en cours</span>
               </div>
-            ) : (
-              <div className="empty-state">Aucun produit disponible.</div>
-            )}
-          </div>
+
+              <div className="max-h-[34rem] overflow-y-auto p-4">
+                {filtered.length > 0 ? (
+                  <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+                    {filtered.map(p => (
+                      <article
+                        key={p.id}
+                        onClick={() => addProduit(p)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            addProduit(p)
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        className="mobile-card cursor-pointer transition hover:border-teal-300 hover:bg-teal-50/40 active:scale-[0.99]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <h2 className="font-semibold text-slate-950">{p.nom}</h2>
+                          <span className="badge badge-neutral">Stock {p.stockActuel}</span>
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-slate-700">{p.prix.toLocaleString('fr-FR')} F</p>
+                        {p.categorie && <p className="mt-1 text-xs text-slate-500">{p.categorie}</p>}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state">Aucun produit disponible.</div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex min-h-[24rem] items-center justify-center p-5">
+              <div className="max-w-sm text-center">
+                <p className="text-lg font-semibold text-slate-950">Prêt pour une nouvelle vente</p>
+                <p className="mt-2 text-sm leading-6 text-slate-500">Le panier reste à droite. Lancez la vente pour afficher les produits disponibles.</p>
+                <button type="button" onClick={() => setVenteActive(true)} className="btn btn-success mt-5 w-full">
+                  Vente
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         <aside className="panel h-fit xl:sticky xl:top-6">
@@ -147,7 +183,14 @@ export default function NouvelleVente() {
 
           <div className="space-y-4 p-4">
             {lignes.length === 0 ? (
-              <div className="empty-state">Panier vide.</div>
+              <div className="empty-state">
+                <p>Panier vide.</p>
+                {!venteActive && (
+                  <button type="button" onClick={() => setVenteActive(true)} className="btn btn-success mt-4">
+                    Vente
+                  </button>
+                )}
+              </div>
             ) : (
               <>
                 <div className="space-y-3">
@@ -201,16 +244,18 @@ export default function NouvelleVente() {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="field-label">N° table</label>
-                    <input
-                      type="text"
-                      placeholder="Restau-bar"
-                      value={numeroTable}
-                      onChange={e => setNumeroTable(e.target.value)}
-                      className="input-control"
-                    />
-                  </div>
+                  {isRestaubar && (
+                    <div>
+                      <label className="field-label">N° table</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: 12"
+                        value={numeroTable}
+                        onChange={e => setNumeroTable(e.target.value)}
+                        className="input-control"
+                      />
+                    </div>
+                  )}
 
                   {modePaiement === 'CREDIT' && (
                     <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
@@ -247,7 +292,7 @@ export default function NouvelleVente() {
                   {error && <p className="text-sm font-medium text-rose-600">{error}</p>}
 
                   <button onClick={handleVente} disabled={loading || lignes.length === 0} className="btn btn-success w-full">
-                    {loading ? 'En cours...' : 'Valider la vente'}
+                    {loading ? 'En cours...' : 'Vendre'}
                   </button>
                 </div>
               </>

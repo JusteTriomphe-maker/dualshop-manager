@@ -11,8 +11,15 @@ const createSchema = z.object({
 async function list(req, res) {
   const { boutiqueId, search } = req.query;
   const where = {};
-  if (boutiqueId) where.boutiqueId = boutiqueId;
+  
+  if (req.user.role === 'CAISSIER') {
+    where.boutiqueId = req.user.boutiqueId;
+  } else if (boutiqueId) {
+    where.boutiqueId = boutiqueId;
+  }
+  
   if (search) where.nom = { contains: search };
+  
   const clients = await prisma.client.findMany({
     where,
     include: { _count: { select: { dettes: true, ventes: true } } },
@@ -30,6 +37,11 @@ async function getById(req, res) {
     },
   });
   if (!client) return res.status(404).json({ error: 'Client introuvable' });
+  
+  if (req.user.role === 'CAISSIER' && client.boutiqueId !== req.user.boutiqueId) {
+    return res.status(403).json({ error: 'Accès interdit : ce client appartient à une autre boutique.' });
+  }
+
   const totalDues = client.dettes.reduce((s, d) => s + d.montantRestant, 0);
   res.json({ ...client, totalDues });
 }

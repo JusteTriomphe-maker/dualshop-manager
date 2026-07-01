@@ -5,7 +5,7 @@ const { authorize } = require('../middlewares/rbac.middleware');
 
 const router = Router();
 router.use(authenticate);
-router.get('/mouvements', mouvements);
+router.get('/mouvements', authorize('DG', 'GERANT'), mouvements);
 router.post('/entree', authorize('DG', 'GERANT'), entree);
 router.post('/ajustement', authorize('DG', 'GERANT'), ajustement);
 
