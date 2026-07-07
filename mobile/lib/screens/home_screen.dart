@@ -42,8 +42,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _checkSync() async {
     final count = await SyncService.countPending();
-    if (mounted) setState(() => _pendingSync = count);
-    Future.delayed(const Duration(seconds: 10), _checkSync);
+    if (!mounted) return;
+    setState(() => _pendingSync = count);
+    Future.delayed(const Duration(seconds: 10), () {
+      if (mounted) _checkSync();
+    });
   }
 
   @override
@@ -62,16 +65,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.orange,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text('$_pendingSync en attente', style: const TextStyle(color: Colors.white, fontSize: 11)),
+                child: Text(
+                  '$_pendingSync en attente',
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                ),
               ),
             ),
           IconButton(
             icon: const Icon(Icons.sync),
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               final res = await SyncService.sync();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(res['synced'] != null ? '${res['synced']} ventes synchronisées' : 'Sync terminée')),
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      res['synced'] != null
+                          ? '${res['synced']} ventes synchronisées'
+                          : 'Sync terminée',
+                    ),
+                  ),
                 );
                 _checkSync();
               }
@@ -88,11 +101,17 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.point_of_sale), label: 'Vente'),
+          NavigationDestination(
+            icon: Icon(Icons.point_of_sale),
+            label: 'Vente',
+          ),
           NavigationDestination(icon: Icon(Icons.inventory), label: 'Stock'),
           NavigationDestination(icon: Icon(Icons.history), label: 'Ventes'),
           NavigationDestination(icon: Icon(Icons.people), label: 'Clients'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet), label: 'Dettes'),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet),
+            label: 'Dettes',
+          ),
         ],
       ),
     );

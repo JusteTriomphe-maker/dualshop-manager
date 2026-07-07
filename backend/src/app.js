@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const os = require('os');
 const path = require('path');
 
 const authRoutes = require('./routes/auth.routes');
@@ -16,6 +17,7 @@ const dettesRoutes = require('./routes/dettes.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
 
 app.use(cors({
   origin: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(','),
@@ -23,9 +25,12 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '1mb' }));
 
-app.get('/api/ping', (req, res) => {
+function sendPing(req, res) {
   res.json({ ok: true, message: 'DualShop API OK', timestamp: new Date().toISOString() });
-});
+}
+
+app.get('/api/ping', sendPing);
+app.get('/api/v1/ping', sendPing);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', usersRoutes);
@@ -47,13 +52,26 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error(err);
   if (err.name === 'ZodError') {
-    return res.status(400).json({ error: 'Validation échouée', details: err.errors });
+    return res.status(400).json({ error: 'Validation echouee', details: err.errors });
   }
   res.status(500).json({ error: err.message || 'Erreur interne' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`DualShop API démarrée sur http://localhost:${PORT}`);
+function getLanUrls(port) {
+  return Object.values(os.networkInterfaces())
+    .flat()
+    .filter((iface) => iface && iface.family === 'IPv4' && !iface.internal)
+    .map((iface) => `http://${iface.address}:${port}`);
+}
+
+app.listen(PORT, HOST, () => {
+  console.log(`DualShop API demarree sur http://localhost:${PORT}`);
+  if (HOST === '0.0.0.0' || HOST === '::') {
+    const lanUrls = getLanUrls(PORT);
+    if (lanUrls.length > 0) {
+      console.log(`Adresse pour telephone physique: ${lanUrls.join(', ')}`);
+    }
+  }
 });
 
 module.exports = app;

@@ -11,6 +11,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const String _resetServerConfig = '__reset_server_config__';
+
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscurePass = true;
@@ -24,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadServerUrl() async {
     final url = await ApiService.getCurrentBaseUrl();
+    if (!mounted) return;
     setState(() => _serverUrl = url);
   }
 
@@ -50,11 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () async {
-              await ApiService.resetBaseUrl();
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Réinitialiser'),
+            onPressed: () => Navigator.pop(ctx, _resetServerConfig),
+            child: const Text('Reinitialiser'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -67,9 +67,21 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
     );
-    if (newUrl != null && newUrl.isNotEmpty) {
-      await ApiService.setBaseUrl(newUrl);
+
+    if (newUrl == null) return;
+
+    try {
+      if (newUrl == _resetServerConfig) {
+        await ApiService.resetBaseUrl();
+      } else if (newUrl.isNotEmpty) {
+        await ApiService.setBaseUrl(newUrl);
+      }
       await _loadServerUrl();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 
@@ -102,11 +114,17 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Icon(Icons.store, size: 64, color: Colors.blue),
               const SizedBox(height: 16),
-              const Text('DualShop Manager', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text(
+                'DualShop Manager',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 32),
               TextField(
                 controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
@@ -116,8 +134,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   labelText: 'Mot de passe',
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePass ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                    icon: Icon(
+                      _obscurePass ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePass = !_obscurePass),
                   ),
                 ),
                 obscureText: _obscurePass,
@@ -135,8 +156,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? null
                       : () => auth.login(_emailCtrl.text, _passCtrl.text),
                   child: auth.loading
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Se connecter', style: TextStyle(fontSize: 16)),
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Se connecter',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
             ],

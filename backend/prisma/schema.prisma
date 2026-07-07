@@ -80,14 +80,16 @@ model LigneVente {
 }
 
 model MouvementStock {
-  id        String        @id @default(uuid())
-  produitId String
-  produit   Produit       @relation(fields: [produitId], references: [id])
-  type      TypeMouvement
-  quantite  Int
-  raison    String?
-  userId    String
-  createdAt DateTime      @default(now())
+  id            String        @id @default(uuid())
+  produitId     String
+  produit       Produit       @relation(fields: [produitId], references: [id])
+  fournisseurId String?
+  fournisseur   Fournisseur?  @relation(fields: [fournisseurId], references: [id])
+  type          TypeMouvement
+  quantite      Int
+  raison        String?
+  userId        String
+  createdAt     DateTime      @default(now())
 }
 
 enum Role {
@@ -134,13 +136,15 @@ model Client {
 }
 
 model Fournisseur {
-  id        String   @id @default(uuid())
-  nom       String
-  telephone String?
-  contact   String?
-  createdAt DateTime @default(now())
-  dettes    DetteFournisseur[]
+  id         String             @id @default(uuid())
+  nom        String
+  telephone  String?
+  contact    String?
+  createdAt  DateTime           @default(now())
+  dettes     DetteFournisseur[]
+  mouvements MouvementStock[]
 }
+
 
 model DetteClient {
   id            String          @id @default(uuid())
